@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#121610" />
+    <title>Slate Lock</title>
+    <link rel="manifest" href="./manifest.json" />
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; font-family: "Avenir Next", "Segoe UI", sans-serif; background: #121610; color: #f3ecdf; }
+      main { max-width: 42rem; margin: 0 auto; padding: 1rem 1rem 4rem; }
+      h1 { font-size: 1.5rem; margin: 0.2rem 0; }
+      p { line-height: 1.5; font-size: 0.95rem; }
+      button, .card { background: #1c2418; color: inherit; border: 1px solid #3a4634; border-radius: 12px; }
+      button { min-height: 44px; padding: 0.6rem 0.8rem; width: 100%; text-align: left; margin: 0.4rem 0; }
+      .muted { color: #b3a894; font-size: 0.8rem; }
+      .accent { color: #e2a23b; }
+      nav { display: flex; gap: 0.4rem; overflow-x: auto; position: sticky; top: 0; background: #121610; padding: 0.4rem 0; }
+      nav button { width: auto; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="accent">SLATE LOCK · static mirror</p>
+      <h1>Tonight’s board</h1>
+      <p id="age" class="muted">loading</p>
+      <nav>
+        <button type="button" data-tab="slate">Slate</button>
+        <button type="button" data-tab="games">Games</button>
+        <button type="button" data-tab="method">Method</button>
+      </nav>
+      <div id="root"></div>
+    </main>
+    <script>
+      const root = document.getElementById("root");
+      const age = document.getElementById("age");
+      let snap = null;
+      let tab = "slate";
+      async function load() {
+        const urls = ["./data/latest.json", "/data/latest.json"];
+        for (const url of urls) {
+          try {
+            const res = await fetch(url, { cache: "no-store" });
+            if (!res.ok) continue;
+            snap = await res.json();
+            age.textContent = snap.generatedAt + " · " + (snap.label || "") + " · " + url;
+            render();
+            return;
+          } catch (err) {}
+        }
+        const cached = localStorage.getItem("slate-lock");
+        if (cached) {
+          snap = JSON.parse(cached);
+          age.textContent = "on-phone copy";
+          render();
+          return;
+        }
+        root.textContent = "No snapshot.";
+      }
+      function render() {
+        try { localStorage.setItem("slate-lock", JSON.stringify(snap)); } catch (e) {}
+        if (tab === "method") {
+          root.innerHTML = "<p>" + escapeHtml(snap.statusLine || "") + "</p>";
+          return;
+        }
+        if (tab === "games") {
+          root.innerHTML = (snap.games || []).map((g) => gameCard(g)).join("");
+          return;
+        }
+        const paras = (snap.narrative && snap.narrative.paragraphs) || [];
+        root.innerHTML =
+          paras.map((p) => "<p>" + escapeHtml(p) + "</p>").join("") +
+          (snap.games || []).map((g) => "<button type='button' data-id='" + g.id + "'>" + escapeHtml(g.awayAbbr + " @ " + g.homeAbbr) + "<br><span class='muted'>" + escapeHtml(g.verdict || "") + "</span></button>").join("");
+        root.querySelectorAll("[data-id]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const g = snap.games.find((x) => x.id === btn.getAttribute("data-id"));
+            root.innerHTML = "<button type='button' id='back'>Back</button>" + gameCard(g);
+            document.getElementById("back").onclick = () => { tab = "slate"; render(); };
+          });
+        });
+      }
+      function gameCard(g) {
+        const paras = (g.paragraphs || []).map((p) => "<p>" + escapeHtml(p) + "</p>").join("");
+        return "<article class='card' style='padding:0.8rem;margin:0.5rem 0'><h2>" + escapeHtml(g.awayAbbr + " @ " + g.homeAbbr) + "</h2><p>" + escapeHtml(g.verdict || "") + "</p>" + paras + "</article>";
+      }
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>]/g, (c) => ({ "&": "&", "<": "<", ">": ">" }[c]));
+      }
+      document.querySelectorAll("[data-tab]").forEach((btn) => {
+        btn.addEventListener("click", () => { tab = btn.getAttribute("data-tab"); render(); });
+      });
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      }
+      load();
+    </script>
+  </body>
+</html>

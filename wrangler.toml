@@ -1,0 +1,17 @@
+name = "nba-matchup"
+main = "worker/index.js"
+compatibility_date = "2026-11-21"
+
+[triggers]
+crons = ["*/20 * * * *"]
+
+# Bind KV and R2 after `wrangler kv namespace create SNAP` and
+# `wrangler r2 bucket create HIST`. Do not point this file at
+# withered-sky-f341. That name is unverified.
+# [[kv_namespaces]]
+# binding = "SNAP"
+# id = ""
+#
+# [[r2_buckets]]
+# binding = "HIST"
+# bucket_name = "nba-matchup-hist"

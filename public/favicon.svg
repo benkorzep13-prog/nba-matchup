@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Slate Lock">
+  <rect width="32" height="32" rx="7" fill="#121610"/>
+  <path d="M11.2 14.2V11a4.8 4.8 0 0 1 9.6 0v3.2" fill="none" stroke="#e2a23b" stroke-width="3.2" stroke-linecap="round"/>
+  <rect x="8" y="14" width="16" height="12" rx="2.5" fill="#e2a23b"/>
+</svg>

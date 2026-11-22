@@ -1,0 +1,8 @@
+{
+  "name": "Slate Lock",
+  "short_name": "Slate",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#121610",
+  "theme_color": "#121610"
+}
