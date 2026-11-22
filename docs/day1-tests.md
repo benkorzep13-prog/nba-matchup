@@ -8,7 +8,14 @@ Not run. No Cloudflare API token is available, and `withered-sky-f341` was not q
 
 ## T2 — ESPN from GitHub Actions
 
-Not run. The workflow file exists. No Actions run has been recorded because the public repo was not confirmed deployed in this session.
+Workflow run [44978541635](https://github.com/benkorzep13-prog/nba-matchup/actions/runs/44978541635), triggered once, not a cron proof.
+
+- Job `build` / step `write snapshot`: success (ESPN fetch from Actions egress returned a snapshot).
+- Job `deploy` / `actions/deploy-pages@v4`: **failure**. `HttpError: Not Found`, status 404, request id `5018:4625B:E4D102:2E141B8:6B025A9F`. Message: GitHub Pages has not been enabled.
+- Enabling Pages from this session: `POST /repos/benkorzep13-prog/nba-matchup/pages` with `build_type=workflow` returned **403** `Resource not accessible by integration`.
+
+No pages URL exists. This is not a D1 or D2 pass.
+
 
 ## T3 — wrangler deploy without a connector
 

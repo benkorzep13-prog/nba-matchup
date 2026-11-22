@@ -3,14 +3,57 @@ import { createServerFn } from "@tanstack/react-start";
 const CHROME_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
-type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
-
 export const readLatestSnapshot = createServerFn({ method: "GET" }).handler(async () => {
   const { readFile } = await import("node:fs/promises");
   const path = await import("node:path");
   const file = path.join(process.cwd(), "public/data/latest.json");
   const raw = await readFile(file, "utf8");
-  return JSON.parse(raw) as Json;
+  const full = JSON.parse(raw) as {
+    generatedAt?: string;
+    slateDate?: string;
+    label?: string;
+    statusLine?: string;
+    hypothesisCount?: number;
+    factorCount?: number;
+    narrative?: { paragraphs?: string[]; source?: string };
+    league?: { ppg?: number; source?: string };
+    alerts?: Array<{ id: string; kind: string; text: string }>;
+    games?: Array<Record<string, unknown>>;
+  };
+  return {
+    generatedAt: full.generatedAt || "",
+    slateDate: full.slateDate || "",
+    label: full.label || "",
+    statusLine: full.statusLine || "",
+    hypothesisCount: full.hypothesisCount || 0,
+    factorCount: full.factorCount || 0,
+    narrative: {
+      paragraphs: (full.narrative?.paragraphs || []).slice(0, 6),
+      source: full.narrative?.source || "rules",
+    },
+    league: full.league?.ppg != null ? { ppg: Number(full.league.ppg), source: String(full.league.source || "") } : null,
+    alerts: (full.alerts || []).slice(0, 8),
+    games: (full.games || []).map((g) => ({
+      id: String(g.id || ""),
+      awayAbbr: String(g.awayAbbr || ""),
+      homeAbbr: String(g.homeAbbr || ""),
+      awayName: String(g.awayName || g.awayAbbr || ""),
+      homeName: String(g.homeName || g.homeAbbr || ""),
+      status: String(g.status || ""),
+      clock: g.clock == null ? null : String(g.clock),
+      homeScore: typeof g.homeScore === "number" ? g.homeScore : null,
+      awayScore: typeof g.awayScore === "number" ? g.awayScore : null,
+      verdict: String(g.verdict || ""),
+      confidence:
+        g.confidence && typeof g.confidence === "object"
+          ? {
+              grade: String((g.confidence as { grade?: string }).grade || ""),
+              score: Number((g.confidence as { score?: number }).score || 0),
+              note: String((g.confidence as { note?: string }).note || ""),
+            }
+          : undefined,
+    })),
+  };
 });
 
 type LiveRow = {

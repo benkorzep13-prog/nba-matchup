@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { liveScoreboard } from "./snapshot.server";
 
 const DB = "nba-matchup";
 const STORE = "snapshots";
@@ -71,27 +70,7 @@ async function fetchSnapshot(): Promise<{ snapshot: SlateSnapshot; source: strin
 }
 
 async function overlayScores(snapshot: SlateSnapshot): Promise<{ snapshot: SlateSnapshot; espnStatus: string }> {
-  try {
-    const live = await liveScoreboard({ data: { date: snapshot.slateDate } });
-    if (!live.ok || live.events.length === 0) {
-      return { snapshot, espnStatus: live.status || "scores unchanged" };
-    }
-    const byId = new Map(live.events.map((row) => [row.id, row]));
-    const games = snapshot.games.map((g) => {
-      const row = byId.get(g.id);
-      if (!row) return g;
-      return {
-        ...g,
-        status: row.status || g.status,
-        clock: row.clock || g.clock,
-        homeScore: row.home ?? g.homeScore,
-        awayScore: row.away ?? g.awayScore,
-      };
-    });
-    return { snapshot: { ...snapshot, games }, espnStatus: live.status };
-  } catch {
-    return { snapshot, espnStatus: "live scores unavailable" };
-  }
+  return { snapshot, espnStatus: "scores on the snapshot" };
 }
 
 export function useSlate(initial: SlateSnapshot | null): LoadState {
@@ -155,7 +134,7 @@ export function useSlate(initial: SlateSnapshot | null): LoadState {
       window.clearInterval(scoreTimer);
       window.clearInterval(snapTimer);
     };
-  }, [initial]);
+  }, [initial?.generatedAt]);
 
   return state;
 }
